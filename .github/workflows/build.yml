@@ -67,23 +67,40 @@ jobs:
             done
           fi
 
+          # Rename anything with .uf2 extension if files exist
+          if ls out/*.uf2 1> /dev/null 2>&1; then
+            for file in out/*.uf2; do
+              mv -v "$file" "${file%.uf2}_${{ matrix.config }}.uf2"
+            done
+          fi
+
       - name: Upload firmware bin
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.config }}.bin
           path: out/*.bin
+          compression-level: 0
       
       - name: Upload firmware hex
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.config }}.hex
           path: out/*.hex
+          compression-level: 0
       
       - name: Upload firmware elf
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.config }}.elf
           path: out/*.elf
+          compression-level: 0
+
+      - name: Upload firmware uf2
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.config }}.uf2
+          path: out/*.uf2
+          compression-level: 0
 
         
     
