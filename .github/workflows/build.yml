@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        config: [btteddy_usb.conf, ender3s1pro_serial.conf]
+        config: [btteddy_usb, ender3s1pro_serial]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -25,28 +25,45 @@ jobs:
         run: mkdir -p out
 
       - name: Build firmware with docker
-        run: docker build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }} --output=out .
+        run: docker build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }}.conf --output=out .
 
-      - name: Rename firmware
+      - name: Remove unnecessary files
+        run: |
+          # Remove any .o files
+          find out -type f -name "*.o" -delete
+
+          # Remove any .d files
+          find out -type f -name "*.d" -delete
+
+          # Remove any .a files
+          find out -type f -name "*.a" -delete
+
+          # Remove any .map files
+          find out -type f -name "*.map" -delete
+
+          # Remove any stage2 files
+          find out -type f -name "stage2*" -delete
+
+      - name: Rename output files
         run: |
           # Rename anything with .bin extension if files exist
           if ls out/*.bin 1> /dev/null 2>&1; then
             for file in out/*.bin; do
-              mv -v "$file" "${file%.bin}_${{ matrix.config }}"
+              mv -v "$file" "${file%.bin}_${{ matrix.config }}.bin"
             done
           fi
 
           # Rename anything with .hex extension if files exist
           if ls out/*.hex 1> /dev/null 2>&1; then
             for file in out/*.hex; do
-              mv -v "$file" "${file%.hex}_${{ matrix.config }}"
+              mv -v "$file" "${file%.hex}_${{ matrix.config }}.hex"
             done
           fi
 
           # Rename anything with .elf extension if files exist
           if ls out/*.elf 1> /dev/null 2>&1; then
             for file in out/*.elf; do
-              mv -v "$file" "${file%.elf}_${{ matrix.config }}"
+              mv -v "$file" "${file%.elf}_${{ matrix.config }}.elf"
             done
           fi
 
