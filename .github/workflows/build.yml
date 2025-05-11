@@ -1,0 +1,66 @@
+name: Build Firmware
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at midnight UTC
+
+# Matrix with different config files.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        config: [btteddy_usb.conf, ender3s1pro_serial.conf]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create output directory
+        run: mkdir -p out
+
+      - name: Build firmware with docker
+        run: docker build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }} --output=out .
+
+      - name: Rename firmware
+        run: |
+          # Rename anything with .bin extension to the name of the config file
+          for file in out/*.bin; do
+            mv "$file" "${file%.bin}_${{ matrix.config }}"
+          done
+
+          # Rename anything with .hex extension to the name of the config file
+          for file in out/*.hex; do
+            mv "$file" "${file%.hex}_${{ matrix.config }}"
+          done
+
+          # Rename anything with .elf extension to the name of the config file
+          for file in out/*.elf; do
+            mv "$file" "${file%.elf}_${{ matrix.config }}"
+          done
+
+      - name: Upload firmware bin
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.config }}-bin
+          path: out/*.bin
+      
+      - name: Upload firmware hex
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.config }}-hex
+          path: out/*.hex
+      
+      - name: Upload firmware elf
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ matrix.config }}-elf
+          path: out/*.elf
+
+        
+    
