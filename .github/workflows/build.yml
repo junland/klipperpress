@@ -54,13 +54,6 @@ jobs:
             done
           fi
 
-          # Rename anything with .hex extension if files exist
-          if ls out/*.hex 1> /dev/null 2>&1; then
-            for file in out/*.hex; do
-              mv -v "$file" "${file%.hex}_${{ matrix.config }}.hex"
-            done
-          fi
-
           # Rename anything with .elf extension if files exist
           if ls out/*.elf 1> /dev/null 2>&1; then
             for file in out/*.elf; do
@@ -80,13 +73,6 @@ jobs:
         with:
           name: firmware-${{ matrix.config }}.bin
           path: out/*.bin
-          compression-level: 0
-      
-      - name: Upload firmware hex
-        uses: actions/upload-artifact@v4
-        with:
-          name: firmware-${{ matrix.config }}.hex
-          path: out/*.hex
           compression-level: 0
       
       - name: Upload firmware elf
