@@ -68,22 +68,23 @@ jobs:
             done
           fi
 
-      - name: Upload firmware bin
+      - name: Upload bin firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.config }}.bin
           path: out/*.bin
           compression-level: 0
       
-      - name: Upload firmware elf
+      - name: Upload elf firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware-${{ matrix.config }}.elf
           path: out/*.elf
           compression-level: 0
 
-      - name: Upload firmware uf2
+      - name: Upload uf2 firmware
         uses: actions/upload-artifact@v4
+        if: ${{ matrix.config }} == "btteddy_usb"
         with:
           name: firmware-${{ matrix.config }}.uf2
           path: out/*.uf2
