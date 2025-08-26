@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        config: [btteddy_usb, ender3s1pro_serial]
+        config: [btteddy_usb, ender3s1pro_f401]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
