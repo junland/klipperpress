@@ -10,12 +10,12 @@ RUN apk update && apk add --no-cache \
     bash \
     binutils-arm-none-eabi \
     binutils-avr \
+    build-base \
     curl \
     dfu-util \
     gcc-arm-none-eabi \
     gcc-avr \
     git \
-    build-base \
     newlib-arm-none-eabi \
     pkgconfig \
     python3
