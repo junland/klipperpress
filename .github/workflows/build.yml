@@ -11,22 +11,35 @@ on:
     # This workflow is triggered every day at 00:00 UTC
     - cron: '0 0 * * *'
 
+# Cancel in-progress runs for the same workflow on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Restrict permissions for security
+permissions:
+  contents: read
+
 # Matrix with different config files.
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         config: [btteddy_usb, ender3s1pro_f401]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Create output directory
         run: mkdir -p out
 
       - name: Build firmware with docker
-        run: docker build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }}.conf --output=out .
+        run: docker buildx build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }}.conf --output=out --cache-from=type=gha --cache-to=type=gha,mode=max .
 
       - name: Remove unnecessary files
         run: |
@@ -84,7 +97,7 @@ jobs:
 
       - name: Upload uf2 firmware
         uses: actions/upload-artifact@v4
-        if: ${{ matrix.config }} == "btteddy_usb"
+        if: matrix.config == 'btteddy_usb'
         with:
           name: firmware-${{ matrix.config }}.uf2
           path: out/*.uf2
