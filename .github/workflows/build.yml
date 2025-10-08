@@ -44,19 +44,19 @@ jobs:
       - name: Remove unnecessary files
         run: |
           # Remove any .o files
-          find out -type f -name "*.o" -delete
+          find out -type f -name "*.o" -delete -print
 
           # Remove any .d files
-          find out -type f -name "*.d" -delete
+          find out -type f -name "*.d" -delete -print
 
           # Remove any .a files
-          find out -type f -name "*.a" -delete
+          find out -type f -name "*.a" -delete -print
 
           # Remove any .map files
-          find out -type f -name "*.map" -delete
+          find out -type f -name "*.map" -delete -print
 
           # Remove any stage2 files
-          find out -type f -name "stage2*" -delete
+          find out -type f -name "stage2*" -delete -print
 
       - name: Rename output files
         run: |
@@ -77,7 +77,7 @@ jobs:
           # Rename anything with .uf2 extension if files exist
           if ls out/*.uf2 1> /dev/null 2>&1; then
             for file in out/*.uf2; do
-              mv -v "$file" "${file%.uf2}_${{ matrix.config }}.uf2"
+              mv -v "$file" "${file%.uf2}_${{ matrix.config }}_uf2.bin"
             done
           fi
 
@@ -94,14 +94,3 @@ jobs:
           name: firmware-${{ matrix.config }}.elf
           path: out/*.elf
           compression-level: 0
-
-      - name: Upload uf2 firmware
-        uses: actions/upload-artifact@v4
-        if: matrix.config == 'btteddy_usb'
-        with:
-          name: firmware-${{ matrix.config }}.uf2
-          path: out/*.uf2
-          compression-level: 0
-
-        
-    
