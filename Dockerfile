@@ -1,8 +1,7 @@
 FROM alpine:3.24 AS builder
 
 ARG BUILD_CONFIG_FILE 
-
-ENV KLIPPER_TAG=master
+ARG KLIPPER_TAG=master
 
 # Update the package index and install necessary packages
 RUN apk update && apk add --no-cache \
@@ -28,7 +27,7 @@ RUN git clone https://github.com/Klipper3d/klipper
 WORKDIR /opt/klipper
 
 # Checkout a tag or branch
-RUN git fetch --tags && git checkout ${KLIPPER_TAG}
+RUN git fetch --tags && git checkout "${KLIPPER_TAG}"
 
 # Create a build_config directory
 RUN mkdir -p /opt/klipper/build_config
