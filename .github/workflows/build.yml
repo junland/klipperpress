@@ -20,14 +20,21 @@ concurrency:
 permissions:
   contents: read
 
-# Matrix with different config files.
 jobs:
   build:
+    name: Build firmware (${{ matrix.image.name }}, ${{ matrix.config }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         config: [btteddy_usb, ender3s1pro_f401]
+        image:
+          - name: alpine
+            dockerfile: Dockerfile
+            artifact_suffix: ""
+          - name: debian
+            dockerfile: Dockerfile.debian
+            artifact_suffix: -debian
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -39,7 +46,14 @@ jobs:
         run: mkdir -p out && echo $TERM
 
       - name: Build firmware with docker
-        run: docker buildx build --build-arg BUILD_CONFIG_FILE=${{ matrix.config }}.conf --output=out --cache-from=type=gha --cache-to=type=gha,mode=max .
+        run: |
+          docker buildx build \
+            --file=${{ matrix.image.dockerfile }} \
+            --build-arg BUILD_CONFIG_FILE=${{ matrix.config }}.conf \
+            --output=out \
+            --cache-from=type=gha,scope=${{ matrix.image.name }}-${{ matrix.config }} \
+            --cache-to=type=gha,mode=max,scope=${{ matrix.image.name }}-${{ matrix.config }} \
+            .
 
       - name: Remove unnecessary files
         run: |
@@ -63,28 +77,28 @@ jobs:
           # Rename anything with .bin extension if files exist
           if ls out/*.bin 1> /dev/null 2>&1; then
             for file in out/*.bin; do
-              mv -v "$file" "${file%.bin}_${{ matrix.config }}.bin"
+              mv -v "$file" "${file%.bin}_${{ matrix.config }}${{ matrix.image.artifact_suffix }}.bin"
             done
           fi
 
           # Rename anything with .elf extension if files exist
           if ls out/*.elf 1> /dev/null 2>&1; then
             for file in out/*.elf; do
-              mv -v "$file" "${file%.elf}_${{ matrix.config }}.elf"
+              mv -v "$file" "${file%.elf}_${{ matrix.config }}${{ matrix.image.artifact_suffix }}.elf"
             done
           fi
 
           # Rename anything with .uf2 extension if files exist
           if ls out/*.uf2 1> /dev/null 2>&1; then
             for file in out/*.uf2; do
-              mv -v "$file" "${file%.uf2}_${{ matrix.config }}_uf2.bin"
+              mv -v "$file" "${file%.uf2}_${{ matrix.config }}${{ matrix.image.artifact_suffix }}_uf2.bin"
             done
           fi
 
       - name: Upload bin firmware
         uses: actions/upload-artifact@v7
         with:
-          name: firmware-${{ matrix.config }}.bin
+          name: firmware-${{ matrix.config }}${{ matrix.image.artifact_suffix }}.bin
           path: out/*.bin
           compression-level: 0
           retention-days: 15
@@ -92,7 +106,7 @@ jobs:
       - name: Upload elf firmware
         uses: actions/upload-artifact@v7
         with:
-          name: firmware-${{ matrix.config }}.elf
+          name: firmware-${{ matrix.config }}${{ matrix.image.artifact_suffix }}.elf
           path: out/*.elf
           compression-level: 0
           retention-days: 15

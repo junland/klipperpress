@@ -1,0 +1,42 @@
+FROM debian:bookworm-slim AS builder
+
+ARG BUILD_CONFIG_FILE
+ARG KLIPPER_TAG=master
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        avr-libc \
+        avrdude \
+        binutils-arm-none-eabi \
+        binutils-avr \
+        build-essential \
+        ca-certificates \
+        curl \
+        dfu-util \
+        gcc-arm-none-eabi \
+        gcc-avr \
+        git \
+        libnewlib-arm-none-eabi \
+        pkg-config \
+        python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt
+
+RUN git clone https://github.com/Klipper3d/klipper
+
+WORKDIR /opt/klipper
+
+RUN git fetch --tags && git checkout "${KLIPPER_TAG}"
+
+RUN mkdir -p /opt/klipper/build_config
+
+COPY conf /opt/klipper/build_config
+
+RUN ln -sv "/opt/klipper/build_config/${BUILD_CONFIG_FILE}" /opt/klipper/.config
+
+RUN make
+
+FROM scratch
+
+COPY --from=builder /opt/klipper/out/ .
